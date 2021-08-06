@@ -43,7 +43,7 @@ void getInputSize()
 
   resn   = 96 ;
   eDim   = 3 ;
-  N_data = pow( N_grid, eDim );
+  N_data = pow( resn, eDim );
 
   if (testMode == 1)
   {
@@ -155,12 +155,13 @@ void mergingArray( int low, int mid, int hig )
 void normalizeArray()
 {
   double dx;
+  int i_data;
 
   if (testMode == 1)
-    printf(" First and Last (Before Normalization) %.2e,%.2e",*data,*(data+N_data-1));
+    printf(" First and Last (Before Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
   dataMax = *( data + N_data - 1 ) ;
 
-  for(int i_data = 0; i_data < N_data - 1; i_data++ )
+  for( i_data = 0; i_data < N_data - 1; i_data++ )
   {
     *( data + i_data ) = *( data + i_data ) / dataMax ;
     *( dummy + i_data ) = fabs( *( data + i_data + 1 ) - *( data + i_data ) ) ;
@@ -168,7 +169,7 @@ void normalizeArray()
   *( data + i_data ) = *( data + i_data ) / dataMax ;
 
   if (testMode == 1)
-    printf(" First and Last (After Normalization) %.2e,%.2e",*data,*(data+N_data-1));
+    printf(" First and Last (After Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
   dataDMin = findMin(dummy, ( N_data - 1 ) ) ;
 
   if (testMode == 1)
@@ -221,7 +222,7 @@ void getBoxDetails()
     expon  = - ( (double) i_ZFn ) / ( (double) N_ZFn ) ;
     noBox  = (int) ( pow( dataDMin, expon ) ) ;
     lenBox = 1.0f / ( (double) noBox );
-    fprintf(fptr,"%d %d %.6f",i_ZFn,noBox,lenBox );
+    fprintf(fptr,"%3d %8d %10.8f \n",i_ZFn,noBox,lenBox );
   }
   fclose(fptr);
 
@@ -257,10 +258,11 @@ void getPartitionFunction()
   double expon;
   int val_box_data;
   double io_xVal,io_yVal;
-  FILE *fptr, *fptr2;
+  FILE *fptr;
+  // FILE *fptr2;
 
 	fptr	=	fopen("moment_q.dat","w");
-	fptr2 =	fopen("box_data.dat","w");
+	// fptr2 =	fopen("box_data.dat","w");
 
 	box_data = (int*)malloc( N_data * sizeof(int) );
 	lnqZFn   = (double*)malloc( ( N_qMom * N_ZFn ) * sizeof(double) );
@@ -276,8 +278,8 @@ void getPartitionFunction()
     for( i_data = 0; i_data < N_data; i_data++ )
     {
       *( box_data + i_data ) = (int) ( *( data + i_data ) * ( (double) noBox ) ) ;
-      if (i_ZFn == 4)
-        fprintf(fptr2,"%d \n", *(box_data + i_data) );
+      // if (i_ZFn == 4)
+        // fprintf(fptr2,"%8d \n", *(box_data + i_data) );
     }
 
     i_data      = 1 ;
@@ -303,18 +305,17 @@ void getPartitionFunction()
       ++i_data;
     }
 
-    fprintf(fptr,"%.8f",io_xVal );
+    fprintf(fptr,"%30.15f",io_xVal );
     for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
     {
       io_yVal =  log( *( qZFn + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) ) ) / ( *( qMom + i_qMom ) - 1 ) ;
-      fprintf(fptr,"%.8f ",io_yVal );
-      i_lnqZFn = ( i_ZFn - 1 ) * N_qMom + i_qMom ;
-      *( lnqZFn + i_lnqZFn ) = io_yVal ;
+      fprintf(fptr,"%30.15f ",io_yVal );
+      *( lnqZFn + ( i_ZFn - 1 ) * N_qMom + i_qMom ) = io_yVal ;
     }
     fprintf(fptr,"\n ");
   }
 
 	fclose(fptr);
-	fclose(fptr2);
+	// fclose(fptr2);
 
 }

@@ -14,8 +14,8 @@ double dataMax;
 int N_qMom;
 double *qMom;
 // Partition Function
-int N_pFun;
-double *pFun;
+int N_ZFn;
+double *qZFn;
 double *lnqZFn;
 double *lnR;
 // Box Counting

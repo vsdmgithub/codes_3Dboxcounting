@@ -34,7 +34,7 @@ int main()
 
   getInputData();
 
-  sortArray( 0, dataSize );
+  sortArray( 0, N_data );
 
   normalizeArray();
 
