@@ -4,16 +4,27 @@
 /*>>>>>>>>>>>>>>>>>>
 *  GLOBAL VARIABLES
 * <<<<<<<<<<<<<<<<< */
-int ind,N_data;
-int N_qMom;
-int N_pFun;
-int *box_data;
+// Data
+int N_data;
+int eDim;
 double *data;
-double *dummy;
-double *pFun;
-double *qMom;
-double *rDim;
 double dataDMin;
+double dataMax;
+// Moments
+int N_qMom;
+double *qMom;
+// Partition Function
+int N_pFun;
+double *pFun;
+double *lnqZFn;
+double *lnR;
+// Box Counting
+int *box_data;
+double *dummy;
+double *rDim;
+
+// Debug
+int testMode;
 
 /*>>>>>>>>>>>>>>>>>>
 * FUNCTION LIST DECL.
@@ -25,10 +36,9 @@ void sortArray( int low, int hig );
 void mergingArray( int low, int mid, int hig );
 void normalizeArray();
 void getBoxDetails();
-void getMomentExp();
+void getMomentList();
 void getPartitionFunction();
-void writeMoments();
-void getDimension();
+// void getDimension();
 double findMin( double *arr, int siz );
 
 #endif

@@ -24,6 +24,10 @@
 
 int main()
 {
+
+  testMode = 1;
+  // testMode = 0;
+
   getInputSize();
 
   allocateArray();
@@ -36,13 +40,13 @@ int main()
 
   getBoxDetails();
 
-  getMomentExp();
+  getMomentList();
 
-  boxCounting();
+  getPartitionFunction();
 
-  free( boxCount );
+  free( box_data );
   free( dummy );
-  free( dataArray );
+  free( data );
 
 	return 0;
 }

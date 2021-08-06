@@ -39,15 +39,18 @@
 *============================================================== */
 void getInputSize()
 {
-  int N_grid;
-  int eDim;
-  N_grid    = 96 ;
-  eDim      = 3 ;
+  int resn;
+
+  resn   = 96 ;
+  eDim   = 3 ;
   N_data = pow( N_grid, eDim );
 
-  printf(" ============================ \n ");
-	printf(" Size of data = %d \n",N_data);
-  printf(" ============================ \n ");
+  if (testMode == 1)
+  {
+    printf(" ============================ \n ");
+    printf(" Size of data = %d \n",N_data);
+    printf(" ============================ \n ");
+  }
 
 }
 /*==============================================================
@@ -58,13 +61,14 @@ void getInputSize()
 void allocateArray()
 {
 
-	data = (double*)malloc( N_data * sizeof(double) );
-	dummy     = (double*)malloc( ( N_data - 1 ) * sizeof(double) );
+	data  = (double*)malloc( N_data * sizeof(double) );
+	dummy = (double*)malloc( ( N_data - 1 ) * sizeof(double) );
 
-  printf(" ============================ \n ");
-	printf(" Data Allocated %ld KB \n ", N_data * sizeof(double) / 1024 );
-  printf(" ============================ \n ");
-
+  if (testMode == 1)
+  {
+  	printf(" Data Allocated %ld KB \n ", N_data * sizeof(double) / 1024 );
+    printf(" ============================ \n ");
+  }
 }
 /*==============================================================
 * FUNCTION :
@@ -74,8 +78,11 @@ void allocateArray()
 void getInputData()
 {
   FILE *fptr;
+  char fileAddress[100];
 
-  if ((fptr = fopen("../ds_N96.dat","r")) == NULL)
+  strcpy(fileAddress , "../ds_N96.dat");
+
+  if ((fptr = fopen(fileAddress,"r")) == NULL)
   {
     printf(" ============================ \n ");
     printf(" Error! opening file");
@@ -89,9 +96,11 @@ void getInputData()
     *( data + i_data ) = fabs( *( data + i_data ) ) ;
   }
 
-  printf(" ============================ \n ");
-	printf(" Data READ successfully. \n ");
-  printf(" ============================ \n ");
+  if (testMode == 1)
+  {
+  	printf(" Data READ successfully. \n ");
+    printf(" ============================ \n ");
+  }
 
 }
 /*==============================================================
@@ -145,34 +154,38 @@ void mergingArray( int low, int mid, int hig )
 *============================================================== */
 void normalizeArray()
 {
-  double dataMax;
   double dx;
 
-  printf(" First and Last (Before Normalization) %.2e,%.2e",*data,*(data+N_data-1));
+  if (testMode == 1)
+    printf(" First and Last (Before Normalization) %.2e,%.2e",*data,*(data+N_data-1));
   dataMax = *( data + N_data - 1 ) ;
 
-  for( i_data = 0; i_data < N_data - 1; i_data++ )
+  for(int i_data = 0; i_data < N_data - 1; i_data++ )
   {
     *( data + i_data ) = *( data + i_data ) / dataMax ;
     *( dummy + i_data ) = fabs( *( data + i_data + 1 ) - *( data + i_data ) ) ;
   }
   *( data + i_data ) = *( data + i_data ) / dataMax ;
 
-  printf(" First and Last (After Normalization) %.2e,%.2e",*data,*(data+N_data-1));
+  if (testMode == 1)
+    printf(" First and Last (After Normalization) %.2e,%.2e",*data,*(data+N_data-1));
   dataDMin = findMin(dummy, ( N_data - 1 ) ) ;
 
-  printf(" ============================ \n ");
-	printf(" Existing diff. in data = %.2e \n ", dataDMin );
+  if (testMode == 1)
+  	printf(" Existing diff. in data = %.2e \n ", dataDMin );
 
   dx = 1.0f / ( (double) N_data ) ;
-  printf(" Grid diff. in data = %.2e \n ", dx );
+  if (testMode == 1)
+    printf(" Grid diff. in data = %.2e \n ", dx );
 
   if ( dataDMin < dx )
     dataDMin = dx;
 
-  printf(" ============================ \n ");
-	printf(" Minimum diff. in data = %.2e \n ", dataDMin );
-  printf(" ============================ \n ");
+  if (testMode == 1)
+  {
+  	printf(" Minimum diff. in data = %.2e \n ", dataDMin );
+    printf(" ============================ \n ");
+  }
 
 }
 double findMin( double *arr, int siz )
@@ -195,21 +208,22 @@ double findMin( double *arr, int siz )
 *============================================================== */
 void getBoxDetails()
 {
-  int i_pFun,noBox;
+  int noBox;
   double lenBox;
   double expon;
+  FILE *fptr;
 
-  N_pFun = 12 ;
+  N_ZFn = 12 ;
 
-  printf(" ============================ \n ");
-  for ( i_pFun = 1; i_pFun <= N_pFun; i_pFun++ )
+	fptr	=	fopen("boxDetails.dat","w");
+  for (int i_ZFn = 1; i_ZFn <= N_ZFn; i_ZFn++ )
   {
-    expon = - ( (double) i_pFun ) / ( (double) N_pFun ) ;
+    expon  = - ( (double) i_ZFn ) / ( (double) N_ZFn ) ;
     noBox  = (int) ( pow( dataDMin, expon ) ) ;
-    lenBox  = 1.0f / ( (double) noBox );
-    printf(" At i_pFun = %d, no of Boxes = %d with size = %.8f \n",i_pFun,noBox,lenBox ) ;
+    lenBox = 1.0f / ( (double) noBox );
+    fprintf(fptr,"%d %d %.6f",i_ZFn,noBox,lenBox );
   }
-  printf(" ============================ \n ");
+  fclose(fptr);
 
 }
 
@@ -218,11 +232,12 @@ void getBoxDetails()
 * ______________________________________________________________
 *     To initialize the list of moment expons.
 *============================================================== */
-void getMomentExp()
+void getMomentList()
 {
   N_qMom    = 10;
-  pFun = (double*)malloc( N_qMom * sizeof(double) );
-  qMom     = (double*)malloc( N_qMom * sizeof(double) );
+
+  qZFn = (double*)malloc( N_qMom * sizeof(double) );
+  qMom = (double*)malloc( N_qMom * sizeof(double) );
   for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
   {
     *( qMom + i_qMom ) = 0.4f * ( (double) ( i_qMom + 1 ) );
@@ -236,48 +251,49 @@ void getMomentExp()
 *============================================================== */
 void getPartitionFunction()
 {
-  int i_pFun,noBox;
+  int noBox;
   int i_data;
   int boxCount;
   double expon;
-  int i_box;
-  double io_xVal,y_value;
+  int val_box_data;
+  double io_xVal,io_yVal;
   FILE *fptr, *fptr2;
 
 	fptr	=	fopen("moment_q.dat","w");
-	fptr2 =	fopen("box_dataData.dat","w");
+	fptr2 =	fopen("box_data.dat","w");
 
 	box_data = (int*)malloc( N_data * sizeof(int) );
+	lnqZFn   = (double*)malloc( ( N_qMom * N_ZFn ) * sizeof(double) );
+	lnR      = (double*)malloc( N_ZFn * sizeof(double) );
 
-  for ( i_pFun = 1; i_pFun <= N_pFun; i_pFun++ )
+  for ( int i_ZFn = 1; i_ZFn <= N_ZFn; i_ZFn++ )
   {
-    expon = - ( (double) i_pFun ) / ( (double) N_pFun ) ;
-    noBox  = (int) ( pow( dataDMin, expon ) ) ;
-
-    io_xVal  = - log( (double) noBox ) ;
-
+    expon            = - ( (double) i_ZFn ) / ( (double) N_ZFn ) ;
+    noBox            = (int) ( pow( dataDMin, expon ) ) ;
+    io_xVal          = - log( (double) noBox ) ;
+    *( lnR + i_ZFn ) = io_xVal ;
 
     for( i_data = 0; i_data < N_data; i_data++ )
     {
       *( box_data + i_data ) = (int) ( *( data + i_data ) * ( (double) noBox ) ) ;
-      if (i_pFun == 4)
+      if (i_ZFn == 4)
         fprintf(fptr2,"%d \n", *(box_data + i_data) );
     }
 
     i_data      = 1 ;
-    i_box    = *box_data ;
+    val_box_data    = *box_data ;
     for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
-      *( pFun + i_qMom )   = 0.0f ;
+      *( qZFn + i_qMom )   = 0.0f ;
 
     boxCount = 1 ;
 
     while( i_data < N_data )
     {
-      if ( *( box_data + i_data ) != i_box )
+      if ( *( box_data + i_data ) != val_box_data )
       {
         for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
-          *( pFun + i_qMom )  = *( pFun + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) );
-        i_box    = *( box_data + i_data );
+          *( qZFn + i_qMom )  = *( qZFn + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) );
+        val_box_data    = *( box_data + i_data );
         boxCount = 1;
       }
       else
@@ -290,8 +306,10 @@ void getPartitionFunction()
     fprintf(fptr,"%.8f",io_xVal );
     for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
     {
-      y_value =  log( *( pFun + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) ) ) / ( *( qMom + i_qMom ) - 1 ) ;
-      fprintf(fptr,"%.8f ",y_value );
+      io_yVal =  log( *( qZFn + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) ) ) / ( *( qMom + i_qMom ) - 1 ) ;
+      fprintf(fptr,"%.8f ",io_yVal );
+      i_lnqZFn = ( i_ZFn - 1 ) * N_qMom + i_qMom ;
+      *( lnqZFn + i_lnqZFn ) = io_yVal ;
     }
     fprintf(fptr,"\n ");
   }
