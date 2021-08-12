@@ -93,7 +93,7 @@ void getInputData()
   for( int i_data = 0; i_data < N_data; i_data++ )
   {
     fscanf(fptr, "%lf", data + i_data );
-    *( data + i_data ) = fabs( *( data + i_data ) ) ;
+    // *( data + i_data ) = fabs( *( data + i_data ) ) ;
   }
 
   if (testMode == 1)
@@ -157,8 +157,8 @@ void normalizeArray()
   double dx;
   int i_data;
 
-  if (testMode == 1)
-    printf(" First and Last (Before Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
+  // if (testMode == 1)
+    // printf(" First and Last (Before Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
   dataMax = *( data + N_data - 1 ) ;
 
   for( i_data = 0; i_data < N_data - 1; i_data++ )
@@ -168,18 +168,18 @@ void normalizeArray()
   }
   *( data + i_data ) = *( data + i_data ) / dataMax ;
 
-  if (testMode == 1)
-    printf(" First and Last (After Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
+  // if (testMode == 1)
+    // printf(" First and Last (After Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
   dataDMin = findMin(dummy, ( N_data - 1 ) ) ;
 
-  if (testMode == 1)
-  	printf(" Existing diff. in data = %.2e \n ", dataDMin );
+  // if (testMode == 1)
+  	// printf(" Existing diff. in data = %.2e \n ", dataDMin );
 
   dx = 1.0f / ( (double) N_data ) ;
-  if (testMode == 1)
-    printf(" Grid diff. in data = %.2e \n ", dx );
+  // if (testMode == 1)
+    // printf(" Grid diff. in data = %.2e \n ", dx );
 
-  if ( dataDMin < dx )
+  if ( dataDMin > dx )
     dataDMin = dx;
 
   if (testMode == 1)

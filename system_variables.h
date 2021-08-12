@@ -4,20 +4,24 @@
 /*>>>>>>>>>>>>>>>>>>
 *  GLOBAL VARIABLES
 * <<<<<<<<<<<<<<<<< */
+
 // Data
 int N_data;
 int eDim;
 double *data;
 double dataDMin;
 double dataMax;
+
 // Moments
 int N_qMom;
 double *qMom;
+
 // Partition Function
 int N_ZFn;
 double *qZFn;
 double *lnqZFn;
 double *lnR;
+
 // Box Counting
 int *box_data;
 double *dummy;
