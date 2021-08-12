@@ -23,7 +23,7 @@
 int main()
 {
 
-  testMode = 1;
+  testMode = 0;
   // testMode = 0;
 
   errorStatus = 0;
@@ -41,7 +41,7 @@ int main()
 
     getMomentList();
 
-    getPartitionFunction();
+    // getPartitionFunction();
   }
 
     free( data );
