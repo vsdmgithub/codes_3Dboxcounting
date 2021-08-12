@@ -37,18 +37,22 @@
 *           To get input parameters for the Box-counting
 * algorithm to work.
 *============================================================== */
-void getInputSize()
+void getInputDetails()
 {
-  int resn;
 
-  resn   = 96 ;
-  eDim   = 3 ;
-  N_data = pow( resn, eDim );
+  log2_N_data = 7 ;
+  // Log of resolution
+
+  N_data  = pow( 2, log2_N_data ) ;
+  // resolution
+
+  N3_data = pow( N_data, 3 );
+  // No of grid points
 
   if (testMode == 1)
   {
     printf(" ============================ \n ");
-    printf(" Size of data = %d \n",N_data);
+    printf(" Size of data = %d \n",N3_data);
     printf(" ============================ \n ");
   }
 
@@ -58,15 +62,14 @@ void getInputSize()
 * ______________________________________________________________
 *           To allocate array memory
 *============================================================== */
-void allocateArray()
+void allocateDataArrays()
 {
 
-	data  = (double*)malloc( N_data * sizeof(double) );
-	dummy = (double*)malloc( ( N_data - 1 ) * sizeof(double) );
+	data  = (double*)malloc( N3_data * sizeof(double) );
 
   if (testMode == 1)
   {
-  	printf(" Data Allocated %ld KB \n ", N_data * sizeof(double) / 1024 );
+  	printf(" Data Allocated %ld KB \n ", N3_data * sizeof(double) / 1024 );
     printf(" ============================ \n ");
   }
 }
@@ -80,21 +83,20 @@ void getInputData()
   FILE *fptr;
   char fileAddress[100];
 
-  strcpy(fileAddress , "../ds_N96.dat");
+  strcpy(fileAddress , "../ds_N128.dat");
+  // Address of input file
 
   if ((fptr = fopen(fileAddress,"r")) == NULL)
   {
     printf(" ============================ \n ");
     printf(" Error! opening file");
     printf(" ============================ \n ");
+    errorStatus = 1;
     exit(1);
   }
 
-  for( int i_data = 0; i_data < N_data; i_data++ )
-  {
+  for( int i_data = 0; i_data < N3_data; i_data++ )
     fscanf(fptr, "%lf", data + i_data );
-    // *( data + i_data ) = fabs( *( data + i_data ) ) ;
-  }
 
   if (testMode == 1)
   {
@@ -106,100 +108,29 @@ void getInputData()
 /*==============================================================
 * FUNCTION :
 * ______________________________________________________________
-*     To sort array using Merge sort, uses order of N * log(N)
-* operations.
+*     To normalize the array by dividing by the average.
 *============================================================== */
-void sortArray(int low, int hig )
+void normalizeData()
 {
-  int mid;
-
-  if ( low < hig )
-  {
-    mid = ( low + hig ) / 2;
-    sortArray( low, mid );
-    sortArray( mid + 1, hig );
-    mergingArray( low, mid, hig );
-  }
-  else
-  {
-    return;
-  }
-}
-void mergingArray( int low, int mid, int hig )
-{
-  int l1, l2, loc;
-  for(l1 = low, l2 = mid + 1, loc = low; l1 <= mid && l2 <= hig; loc++)
-  {
-    if(*( data + l1 ) <= *( data + l2) )
-      *( dummy + loc ) = *( data + l1++ );
-    else
-      *( dummy + loc ) = *( data + l2++ );
-  }
-
-  while(l1 <= mid)
-    *( dummy + loc++ ) = *( data + l1++ );
-
-  while(l2 <= hig)
-    *( dummy + loc++ ) = *( data + l2++ );
-
-  for(loc = low; loc <= hig; loc++)
-    *( data + loc ) = *( dummy + loc );
-}
-
-/*==============================================================
-* FUNCTION :
-* ______________________________________________________________
-*     To normalize the array to range between (0,1). Also to find
-*the smallest difference.
-*============================================================== */
-void normalizeArray()
-{
-  double dx;
+  double sum;
   int i_data;
 
-  // if (testMode == 1)
-    // printf(" First and Last (Before Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
-  dataMax = *( data + N_data - 1 ) ;
-
-  for( i_data = 0; i_data < N_data - 1; i_data++ )
+  for( i_data = 0; i_data < N3_data ; i_data++ )
   {
-    *( data + i_data ) = *( data + i_data ) / dataMax ;
-    *( dummy + i_data ) = fabs( *( data + i_data + 1 ) - *( data + i_data ) ) ;
+    sum = sum + *( data + i_data ) ;
   }
-  *( data + i_data ) = *( data + i_data ) / dataMax ;
-
-  // if (testMode == 1)
-    // printf(" First and Last (After Normalization) %.2e,%.2e \n",*data,*(data+N_data-1));
-  dataDMin = findMin(dummy, ( N_data - 1 ) ) ;
-
-  // if (testMode == 1)
-  	// printf(" Existing diff. in data = %.2e \n ", dataDMin );
-
-  dx = 1.0f / ( (double) N_data ) ;
-  // if (testMode == 1)
-    // printf(" Grid diff. in data = %.2e \n ", dx );
-
-  if ( dataDMin > dx )
-    dataDMin = dx;
+  *dataAvg = sum / N3_data ;
+  // Average data
 
   if (testMode == 1)
   {
-  	printf(" Minimum diff. in data = %.2e \n ", dataDMin );
+  	printf(" Average of the data = %30.15f \n ",*dataAvg );
     printf(" ============================ \n ");
   }
 
-}
-double findMin( double *arr, int siz )
-{
-  double minVal;
-  minVal = *arr;
-  for( int y = 1; y < siz; y++ )
-  {
-    if ( *(arr + y) < minVal )
-      minVal = *( arr + y );
-  }
+  for( i_data = 0; i_data < N3_data ; i_data++ )
+    *( data + i_data ) = *( data + i_data ) / *dataAvg ;
 
-  return minVal;
 }
 
 /*==============================================================
@@ -209,20 +140,31 @@ double findMin( double *arr, int siz )
 *============================================================== */
 void getBoxDetails()
 {
-  int noBox;
-  double lenBox;
-  double expon;
   FILE *fptr;
+  // double minBoxSize,maxBoxSize;
 
-  N_ZFn = 12 ;
+  N_Zfn      = log2_N_data - 3 ;
+  // Declaring the no of partitions
 
-	fptr	=	fopen("boxDetails.dat","w");
-  for (int i_ZFn = 1; i_ZFn <= N_ZFn; i_ZFn++ )
+  // minBoxSize = dx * pow( 2, 1 ) ;
+  // maxBoxSize = dx * pow( 2, N_Zfn ) ;
+
+	noofBoxes  = (int*)malloc( N_Zfn * sizeof(int) );
+	boxGrids   = (int*)malloc( N_Zfn * sizeof(int) );
+
+	fptr	     =	fopen("partition_details.dat","w");
+
+  for (int i_Zfn = 1; i_Zfn <= N_Zfn; i_Zfn++ )
   {
-    expon  = - ( (double) i_ZFn ) / ( (double) N_ZFn ) ;
-    noBox  = (int) ( pow( dataDMin, expon ) ) ;
-    lenBox = 1.0f / ( (double) noBox );
-    fprintf(fptr,"%3d %8d %10.8f \n",i_ZFn,noBox,lenBox );
+    *( noofBoxes + i_Zfn ) = int( N_data / pow( 2, i_Zfn ) ) ;
+    // No of boxes in this partition level
+
+    *( boxGrids + i_Zfn )  = pow( 2, i_Zfn ) ;
+    // No of grid points in a box at this partition level
+
+    fprintf(fptr,"%3d %6d %6d \n",i_Zfn, *( noofBoxes + i_Zfn ), *( boxGrids + i_Zfn ) );
+    if (testMode == 1)
+    	printf(" Level = %d ; No of boxes = %d ; Grids in a Box : %d \n ", i_Zfn, *( noofBoxes + i_Zfn ), *( boxGrids + i_Zfn ) );
   }
   fclose(fptr);
 
@@ -235,13 +177,20 @@ void getBoxDetails()
 *============================================================== */
 void getMomentList()
 {
-  N_qMom    = 10;
+  FILE *fptr;
 
-  qZFn = (double*)malloc( N_qMom * sizeof(double) );
-  qMom = (double*)malloc( N_qMom * sizeof(double) );
+  N_qMom    = 10;
+  // No of moments to be calculated
+
+	fptr	     =	fopen("moment_details.dat","w");
+  qMom    = (double*)malloc( N_qMom * sizeof(double) );
+  dataMom = (double*)malloc( N_qMom * sizeof(double) );
+
   for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
   {
     *( qMom + i_qMom ) = 0.4f * ( (double) ( i_qMom + 1 ) );
+    // Value of exponent, that the moment will be calculated
+    fprintf(fptr,"%6.4f \n",*( qMom + i_qMom ) );
   }
 }
 
@@ -252,70 +201,75 @@ void getMomentList()
 *============================================================== */
 void getPartitionFunction()
 {
-  int noBox;
-  int i_data;
-  int boxCount;
-  double expon;
-  int val_box_data;
-  double io_xVal,io_yVal;
   FILE *fptr;
-  // FILE *fptr2;
+  int N_box, I_grid;
+  int N3_box, I3_grid;
+  int i_x,i_y,i_z;
+  int box_x,box_y,box_z;
+  int i_box,i_data;
+  int i_Zfn  = 0;
+  int i_qMom = 0;
 
-	fptr	=	fopen("moment_q.dat","w");
-	// fptr2 =	fopen("box_data.dat","w");
+  fptr	     =	fopen("partition_function.dat","w");
 
-	box_data = (int*)malloc( N_data * sizeof(int) );
-	lnqZFn   = (double*)malloc( ( N_qMom * N_ZFn ) * sizeof(double) );
-	lnR      = (double*)malloc( N_ZFn * sizeof(double) );
+  while( i_Zfn < N_Zfn ){
+  // For each partition level, the moments are calculated.
 
-  for ( int i_ZFn = 1; i_ZFn <= N_ZFn; i_ZFn++ )
-  {
-    expon            = - ( (double) i_ZFn ) / ( (double) N_ZFn ) ;
-    noBox            = (int) ( pow( dataDMin, expon ) ) ;
-    io_xVal          = - log( (double) noBox ) ;
-    *( lnR + i_ZFn ) = io_xVal ;
+    fprintf(fptr," %2d ",i_Zfn ) ;
+    // Printing the log of box size, proportionality
 
-    for( i_data = 0; i_data < N_data; i_data++ )
-    {
-      *( box_data + i_data ) = (int) ( *( data + i_data ) * ( (double) noBox ) ) ;
-      // if (i_ZFn == 4)
-        // fprintf(fptr2,"%8d \n", *(box_data + i_data) );
+    I_grid = *( boxGrids + i_Zfn ) ;
+    I3_grid= pow( I_grid, 3 ) ;
+    // total no of grids in a box at this level
+
+    N_box  = *( noofBoxes + i_Zfn )  ;
+    N3_box = pow( N_box, 3 );
+    // Total no of boxes at this level
+
+    dataBox = (double*)malloc( N3_box * sizeof(double) );
+    // Allocating box data size
+
+    for( i_x = 0; i_x < N_data; i_x++ ) {
+    for( i_y = 0; i_y < N_data; i_y++ ) {
+    for( i_z = 0; i_z < N_data; i_z++ ) {
+
+      i_data = ( i_x * N_data * N_data + i_y * N_data + i_z * N_data ) ;
+      // Linear address of the data
+
+      box_x = (int) ( i_x / I_grid ) ;
+      box_y = (int) ( i_y / I_grid ) ;
+      box_z = (int) ( i_z / I_grid ) ;
+      // Finding the x,y,z location of the box_x
+
+      i_box = ( box_x * N_box * N_box + box_y * N_box + box_z ) ;
+      // Linear address of the box location
+
+      *( dataBox + i_box ) = *( dataBox + i_box ) + *( data + i_data ) ;
+      // Adding the grid data to corresponding box data
+
+    }
+    }
     }
 
-    i_data      = 1 ;
-    val_box_data    = *box_data ;
-    for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
-      *( qZFn + i_qMom )   = 0.0f ;
+    while( i_qMom < N_qMom ) {
 
-    boxCount = 1 ;
+      *( dataMom + i_qMom ) = 0.0f ;
+      // Reseting the parition function value for each moment at this level
 
-    while( i_data < N_data )
-    {
-      if ( *( box_data + i_data ) != val_box_data )
-      {
-        for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
-          *( qZFn + i_qMom )  = *( qZFn + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) );
-        val_box_data    = *( box_data + i_data );
-        boxCount = 1;
-      }
-      else
-      {
-        ++boxCount;
-      }
-      ++i_data;
+      for( i_box = 0; i_box < N3_box; i_box++ )
+        *( dataMom + i_qMom ) = *( dataMom + i_qMom ) + pow( *( dataBox + i_box ) / I3_grid , *( qMom + i_qMom ) ) ;
+        // For each moment, calculating the partition function at this level
+
+      fprintf(fptr," %30.15f ",log( *( dataMom + i_qMom ) ) ) ;
+      // Printing each moment at this partition level
     }
 
-    fprintf(fptr,"%30.15f",io_xVal );
-    for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
-    {
-      io_yVal =  log( *( qZFn + i_qMom ) + pow( (double) boxCount / (double) N_data, *( qMom + i_qMom ) ) ) / ( *( qMom + i_qMom ) - 1 ) ;
-      fprintf(fptr,"%30.15f ",io_yVal );
-      *( lnqZFn + ( i_ZFn - 1 ) * N_qMom + i_qMom ) = io_yVal ;
-    }
-    fprintf(fptr,"\n ");
+    fprintf(fptr," \n ") ;
+    // this partition level calculation is completed, over to next partition level
+
+    free(dataBox) ;
+    // Freeing box data
   }
-
 	fclose(fptr);
-	// fclose(fptr2);
 
 }

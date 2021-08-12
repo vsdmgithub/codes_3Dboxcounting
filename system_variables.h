@@ -6,43 +6,35 @@
 * <<<<<<<<<<<<<<<<< */
 
 // Data
-int N_data;
-int eDim;
+int N_data,N3_data;
+int log2_N_data;
 double *data;
-double dataDMin;
-double dataMax;
+double *dataAvg;
 
 // Moments
 int N_qMom;
 double *qMom;
+double *dataMom;
 
 // Partition Function
-int N_ZFn;
-double *qZFn;
-double *lnqZFn;
-double *lnR;
-
-// Box Counting
-int *box_data;
-double *dummy;
-double *rDim;
+int N_Zfn;
+double *dataBox;
+int *noofBoxes;
+int *boxGrids;
 
 // Debug
 int testMode;
+int errorStatus;
 
 /*>>>>>>>>>>>>>>>>>>
 * FUNCTION LIST DECL.
 * <<<<<<<<<<<<<<<<< */
-void getInputSize();
-void allocateArray();
+void getInputDetails();
+void allocateDataArrays();
 void getInputData();
-void sortArray( int low, int hig );
-void mergingArray( int low, int mid, int hig );
-void normalizeArray();
+void normalizeData();
 void getBoxDetails();
 void getMomentList();
 void getPartitionFunction();
-// void getDimension();
-double findMin( double *arr, int siz );
 
 #endif

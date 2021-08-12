@@ -3,9 +3,8 @@
 * PROGRAM :- TO FIND THE FRACTAL DIMENSION OF GIVEN DATA
 *         	 USING BOX-COUNTING ALGORITHM.
 * _________________________________________________________________
-* REF    :- Efficient box-counting determination of generalized
-*   			  fractal dimensions, A.Block et.al.,(1990)
-* DATE   :- 29 JULY 2021
+* REF    :- Standard moment method.
+* DATE   :- 12 AUGUST 2021
 * AUTHOR :- SUGAN DURAI MURUGAN V
 * _________________________________________________________________
 * IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
@@ -17,7 +16,6 @@
 #include "system_variables.h"
 #include <stdio.h>
 #include <math.h>
-#include <time.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
@@ -28,25 +26,25 @@ int main()
   testMode = 1;
   // testMode = 0;
 
-  getInputSize();
+  errorStatus = 0;
+  getInputDetails();
 
-  allocateArray();
+  allocateDataArrays();
 
   getInputData();
 
-  sortArray( 0, N_data );
+  if ( errorStatus != 1 ){
 
-  normalizeArray();
+    normalizeData();
 
-  getBoxDetails();
+    getBoxDetails();
 
-  getMomentList();
+    getMomentList();
 
-  getPartitionFunction();
+    getPartitionFunction();
+  }
 
-  free( box_data );
-  free( dummy );
-  free( data );
+    free( data );
 
 	return 0;
 }
