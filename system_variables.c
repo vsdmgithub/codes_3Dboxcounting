@@ -120,12 +120,16 @@ void normalizeData()
 {
   double avg;
   int i_data;
+  double max_data;
 
-  avg = 0.0f;
+  max_data = *data ;
+  avg      = 0.0f;
 
   for( i_data = 0; i_data < N3_data ; i_data++ )
   {
     avg = avg + *( data + i_data ) ;
+    if ( *( data + i_data ) > max_data )
+      max_data = *( data + i_data );
   }
 
   avg = avg / (double) N3_data ;
@@ -133,12 +137,14 @@ void normalizeData()
 
   if (testMode == 1)
   {
-  	printf(" Average of the data = %30.15f \n ",avg );
+  	printf(" Average of the data = %12.8f \n ",avg );
+  	printf(" Maximum of the data = %12.8f \n ",max_data );
     printf(" ============================ \n ");
   }
 
   for( i_data = 0; i_data < N3_data ; i_data++ )
     *( data + i_data ) = *( data + i_data ) / avg ;
+  // *( data + i_data ) = *( data + i_data ) / max_data ;
 
 }
 
@@ -152,34 +158,44 @@ void getBoxDetails()
   FILE *fptr;
   double a_Z,b_Z;
 
-  N_Zfn      = 4 ;
+  N_Zfn      = 8 ;
   // Declaring the no of partitions
 
-	noofBoxes  = (int*)malloc( N_Zfn * sizeof(int) );
-	boxGrids   = (int*)malloc( N_Zfn * sizeof(int) );
+	noofBoxes    = (int*)malloc( N_Zfn * sizeof(int) );
+	boxGrids     = (int*)malloc( N_Zfn * sizeof(int) );
+	log_boxGrids = (double*)malloc( N_Zfn * sizeof(double) );
 
-	fptr	     =	fopen("partition_details.dat","w");
+	fptr	       =	fopen("levels_of_partition.dat","w");
 
   // Minimum size of box = dx * 2^2
   // Maximum size of box = dx * 2^(p-2)
 
-  a_Z = (double) (log2_N_data - 4) / ( N_Zfn - 4 );
-  b_Z = 2.0f - a_Z ;
+  a_Z = (double) ( log2_N_data - 4 ) / (double) ( N_Zfn - 1 );
+  b_Z = 2.0f ;
+
+  if (testMode == 1)
+    printf(" Partition Details \n");
 
   for (int i_Zfn = 0; i_Zfn < N_Zfn; i_Zfn++ )
   {
-    *( noofBoxes + i_Zfn ) = (int) pow( 2.0f, log2_N_data - a_Z * ( i_Zfn + 1 ) - b_Z ) ;
+    *( noofBoxes + i_Zfn ) = (int) pow( 2.0f, log2_N_data - a_Z * i_Zfn - b_Z ) ;
     // No of boxes in this partition level
 
-    *( boxGrids + i_Zfn )  = (int) pow( 2,  a_Z * ( i_Zfn + 1 ) + b_Z ) ;
+    *( boxGrids + i_Zfn )  = (int) pow( 2.0f,  a_Z * i_Zfn + b_Z ) ;
     // No of grid points in a box at this partition level
 
+    *( log_boxGrids + i_Zfn ) = log( (double) *( boxGrids + i_Zfn ) );
+   // Log of box size
+
     fprintf(fptr,"%3d %6d %6d \n",i_Zfn + 1, *( noofBoxes + i_Zfn ), *( boxGrids + i_Zfn ) );
+
     if (testMode == 1)
     	printf(" Level = %d ; No of boxes = %d ; Grids in a Box : %d \n ", i_Zfn + 1, *( noofBoxes + i_Zfn ), *( boxGrids + i_Zfn ) );
   }
   fclose(fptr);
 
+  if (testMode == 1)
+    printf(" ============================ \n ");
 }
 
 /*==============================================================
@@ -191,17 +207,17 @@ void getMomentList()
 {
   FILE *fptr;
 
-  N_qMom    = 5 ;
+  N_qMom    = 25 ;
   // No of moments to be calculated
 
 	fptr	     =	fopen("moment_details.dat","w");
   qMom    = (double*)malloc( N_qMom * sizeof(double) );
-  dataMom = (double*)malloc( N_qMom * sizeof(double) );
+  dataMom = (double*)malloc( ( N_qMom * N_Zfn ) * sizeof(double) );
 
   for( int i_qMom = 0; i_qMom < N_qMom; i_qMom++ )
   {
-    *( qMom + i_qMom ) = 0.4f * ( (double) ( i_qMom + 1 ) );
-    // Value of exponent, that the moment will be calculated
+    *( qMom + i_qMom ) = -1.0f + 0.15f * ( (double) ( i_qMom ) );
+    // Value of the moment will be calculated
     fprintf(fptr,"%6.4f \n",*( qMom + i_qMom ) );
   }
 }
@@ -221,38 +237,43 @@ void getPartitionFunction()
   int i_box,i_data;
   int i_qMom;
   int i_Zfn;
-  double N3_box_inv;
+  int N_dataAdj;
   double I3_grid_inv;
 
   i_Zfn  = 0;
 
   fptr	     =	fopen("partition_function.dat","w");
 
+  if (testMode == 1)
+    printf(" Partition Function \n ");
+
   while( i_Zfn < N_Zfn ){
   // For each partition level, the moments are calculated.
 
-    fprintf(fptr," %2d ",i_Zfn + 1) ;
-    // Printing the log of box size, proportionality
-
-    I_grid = *( boxGrids + i_Zfn ) ;
-    I3_grid= pow( I_grid, 3 ) ;
+    I_grid      = *( boxGrids + i_Zfn ) ;
+    I3_grid     = pow( I_grid, 3 ) ;
     I3_grid_inv = 1.0f / (double) I3_grid ;
     // total no of grids in a box at this level
 
-    N_box  = *( noofBoxes + i_Zfn )  ;
-    N3_box = pow( N_box, 3 );
-    N3_box_inv = 1.0f / (double) N3_box ;
+    fprintf(fptr," %30.15f ", *( log_boxGrids + i_Zfn ) ) ;
+    // Printing the log of box size, proportionality
+
+    N_box     = *( noofBoxes + i_Zfn ) ;
+    N3_box    = pow( N_box, 3 );
     // Total no of boxes at this level
 
-    dataBox = (double*)malloc( N3_box * sizeof(double) );
+    N_dataAdj = I_grid * N_box ;
+    // Adjusted data size, removing the extra padding at this level.
+
+    dataBox   = (double*)malloc( N3_box * sizeof(double) );
     // Allocating box data size
 
-    // for( i_box = 0; i_box < N3_box; i_box++ )
-      // *( dataBox + i_box ) = 0.0f;
+    for( i_box = 0; i_box < N3_box; i_box++ )
+      *( dataBox + i_box ) = 0.0f;
 
-    for( i_x = 0; i_x < N_data; i_x++ ) {
-    for( i_y = 0; i_y < N_data; i_y++ ) {
-    for( i_z = 0; i_z < N_data; i_z++ ) {
+    for( i_x = 0; i_x < N_dataAdj; i_x++ ) {
+    for( i_y = 0; i_y < N_dataAdj; i_y++ ) {
+    for( i_z = 0; i_z < N_dataAdj; i_z++ ) {
 
       i_data = ( i_x * N_data * N_data + i_y * N_data + i_z ) ;
       // Linear address of the data
@@ -265,7 +286,8 @@ void getPartitionFunction()
       i_box = ( box_x * N_box * N_box + box_y * N_box + box_z ) ;
       // Linear address of the box location
 
-      *( dataBox + i_box ) = *( dataBox + i_box ) + I3_grid_inv * ( *( data + i_data ) );
+      *( dataBox + i_box ) = *( dataBox + i_box ) + ( *( data + i_data ) );
+      // *( dataBox + i_box ) = *( dataBox + i_box ) + I3_grid_inv * ( *( data + i_data ) );
       // Adding the grid data to corresponding box data
 
     }
@@ -276,21 +298,25 @@ void getPartitionFunction()
 
     while( i_qMom < N_qMom ) {
 
-      *( dataMom + i_qMom ) = 0.0f ;
-      // Reseting the parition function value for each moment at this le  vel
-
       for( i_box = 0; i_box < N3_box; i_box++ )
-        *( dataMom + i_qMom ) = *( dataMom + i_qMom ) + N3_box_inv * pow( *( dataBox + i_box ) , *( qMom + i_qMom ) ) ;
+        *( dataMom + i_Zfn * N_qMom + i_qMom ) = *( dataMom + i_Zfn * N_qMom + i_qMom ) + pow( *( dataBox + i_box ) , *( qMom + i_qMom ) ) ;
         // For each moment, calculating the partition function at this level
 
-      fprintf(fptr," %30.15f ",log( *( dataMom + i_qMom ) ) ) ;
-      // Printing each moment at this partition level
+      *( dataMom + i_Zfn * N_qMom + i_qMom ) = log( *( dataMom + i_Zfn * N_qMom + i_qMom ) / (double) N3_box ) ;
+      fprintf(fptr," %30.15f ",*( dataMom + i_Zfn * N_qMom + i_qMom ) ) ;
+      // Printing each moment (log) at this partition level
+
+      if (testMode == 1)
+      	printf(" %10.8f ", *( dataMom + i_Zfn * N_qMom + i_qMom ) );
 
       i_qMom = i_qMom + 1 ;
     }
 
     fprintf(fptr," \n ") ;
     // this partition level calculation is completed, over to next partition level
+
+    if (testMode == 1)
+    	printf(" \n ");
 
     free(dataBox) ;
     // Freeing box data
@@ -299,4 +325,56 @@ void getPartitionFunction()
   }
 	fclose(fptr);
 
+  if (testMode == 1)
+      printf("================================= \n ");
+
+}
+
+/*==============================================================
+* FUNCTION :
+* ______________________________________________________________
+*     To find the moment exponents using partition function.
+*============================================================== */
+void getExponents()
+{
+  FILE *fptr;
+  double sumX2,sumXY;
+  double sumX,sumY;
+  int i_Zfn;
+
+  dataExp = (double*)malloc( N_qMom * sizeof(double) );
+
+  fptr	     =	fopen("exponents.dat","w");
+
+  if (testMode == 1)
+  	printf(" Exponents \n ") ;
+
+  for( int i_qMom=0; i_qMom < N_qMom; i_qMom++ )
+  {
+    sumX2 = 0.0f;
+    sumXY = 0.0f;
+    sumY = 0.0f;
+    sumX = 0.0f;
+
+    for(i_Zfn=0; i_Zfn < N_Zfn; i_Zfn++ )
+    {
+    sumX = sumX + *( log_boxGrids + i_Zfn );
+    sumY = sumY + *( dataMom + i_Zfn * N_qMom + i_qMom );
+    sumX2 = sumX2 + pow( *( log_boxGrids + i_Zfn ), 2.0f );
+    sumXY = sumXY + ( *( log_boxGrids + i_Zfn ) ) * ( *( dataMom + i_Zfn * N_qMom + i_qMom ) ) ;
+    }
+
+    *( dataExp + i_qMom ) = ( N_Zfn * sumXY - sumX * sumY ) / ( N_Zfn * sumX2 - pow( sumX, 2.0f ) );
+    // Slope of the moments in log scale gives the exponent.
+
+    fprintf(fptr," %6.4f %30.15f \n",*( qMom + i_qMom ), *( dataExp + i_qMom ) ) ;
+
+    if (testMode == 1)
+    	printf(" %6.4f %10.8f \n ",*( qMom + i_qMom ), *( dataExp + i_qMom ) );
+  }
+
+	fclose(fptr);
+
+  if (testMode == 1)
+    printf("================================= \n ");
 }

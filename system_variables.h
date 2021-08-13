@@ -21,6 +21,10 @@ int N_Zfn;
 double *dataBox;
 int *noofBoxes;
 int *boxGrids;
+double *log_boxGrids;
+
+// Exponents
+double *dataExp;
 
 // Debug
 int testMode;
@@ -36,5 +40,6 @@ void normalizeData();
 void getBoxDetails();
 void getMomentList();
 void getPartitionFunction();
+void getExponents();
 
 #endif

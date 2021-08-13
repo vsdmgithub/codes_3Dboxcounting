@@ -41,7 +41,9 @@ int main()
 
     getMomentList();
 
-    // getPartitionFunction();
+    getPartitionFunction();
+
+    getExponents();
   }
 
     free( data );
