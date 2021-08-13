@@ -150,25 +150,28 @@ void normalizeData()
 void getBoxDetails()
 {
   FILE *fptr;
-  // double minBoxSize,maxBoxSize;
+  double a_Z,b_Z;
 
-  N_Zfn      = log2_N_data - 3 ;
+  N_Zfn      = 4 ;
   // Declaring the no of partitions
-
-  // minBoxSize = dx * pow( 2, 1 ) ;
-  // maxBoxSize = dx * pow( 2, N_Zfn ) ;
 
 	noofBoxes  = (int*)malloc( N_Zfn * sizeof(int) );
 	boxGrids   = (int*)malloc( N_Zfn * sizeof(int) );
 
 	fptr	     =	fopen("partition_details.dat","w");
 
+  // Minimum size of box = dx * 2^2
+  // Maximum size of box = dx * 2^(p-2)
+
+  a_Z = (double) (log2_N_data - 4) / ( N_Zfn - 4 );
+  b_Z = 2.0f - a_Z ;
+
   for (int i_Zfn = 0; i_Zfn < N_Zfn; i_Zfn++ )
   {
-    *( noofBoxes + i_Zfn ) = pow( 2, log2_N_data - i_Zfn - 2 ) ;
+    *( noofBoxes + i_Zfn ) = (int) pow( 2.0f, log2_N_data - a_Z * ( i_Zfn + 1 ) - b_Z ) ;
     // No of boxes in this partition level
 
-    *( boxGrids + i_Zfn )  = pow( 2, i_Zfn + 2 ) ;
+    *( boxGrids + i_Zfn )  = (int) pow( 2,  a_Z * ( i_Zfn + 1 ) + b_Z ) ;
     // No of grid points in a box at this partition level
 
     fprintf(fptr,"%3d %6d %6d \n",i_Zfn + 1, *( noofBoxes + i_Zfn ), *( boxGrids + i_Zfn ) );
