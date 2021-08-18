@@ -23,7 +23,7 @@
 int main()
 {
 
-  testMode = 1;
+  testMode = 0;
   // testMode = 0;
 
   errorStatus = 0;

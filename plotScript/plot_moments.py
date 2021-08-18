@@ -21,6 +21,6 @@ for q in range(0,N_qMom):
 ax.tick_params(axis='both',which='major',direction='in',colors=colK1,labelsize=fsTk3,length=tkL3,width=tkW2,pad=0.8)
 # ax.set_xlabel(r' $\mathsf{ q }$',labelpad=0,color=colK1,fontsize=fsLb3)
 # ax.set_ylabel(r' $\mathsf{ \tau_q$',labelpad=0,color=colK1,fontsize=fsLb3)
-ax.legend()
-h_legend = ax.legend(bbox_to_anchor=(0.01,0.98),ncol=2,loc=2,frameon=False,fontsize=fsLg2,markerscale=1.25,facecolor='none',columnspacing=0.4,borderpad=1.0)
+# ax.legend()
+# h_legend = ax.legend(bbox_to_anchor=(0.01,0.98),ncol=2,loc=2,frameon=False,fontsize=fsLg2,markerscale=1.25,facecolor='none',columnspacing=0.4,borderpad=1.0)
 plt.savefig('moments.pdf',dpi=dpi2,transparent=True,bbox_inches='tight')

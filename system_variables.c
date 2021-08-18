@@ -238,7 +238,7 @@ void getPartitionFunction()
   int i_qMom;
   int i_Zfn;
   int N_dataAdj;
-  double I3_grid_inv;
+  // double I3_grid_inv;
 
   i_Zfn  = 0;
 

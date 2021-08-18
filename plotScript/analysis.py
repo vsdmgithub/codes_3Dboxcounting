@@ -24,6 +24,6 @@ for q in range(0,N_qMom):
 
 f_spl = interp1d(qMom,dataExp,kind='cubic')
 for q in range(1,N_qMom-1):
-    h[q] =  derivative(f_spl,qMom[q],dx=1e-6)
-    D_h[q] = h[q]* qMom[q] +3 - dataExp[q]
-# print(D_h)
+    h[q] =  (derivative(f_spl,qMom[q],dx=1e-6)-2.0 )/3.0
+    D_h[q] = (3.0 * h[q] + 2.0 )* qMom[q] +3 - dataExp[q]
+    print(h[q],D_h[q])
